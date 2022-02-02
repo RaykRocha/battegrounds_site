@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="widht=device-width, initial-scale=1">
+	<title>Battlegrounds - FIAP</title>
+	<meta name="description" content="Site desenvolido pela equipe Battlegrounds, para implementação de nota da atividade multidisciplinar - FIAP 2018">
+	<meta  name="keywords" content="FIAP, RoboCup, Iron Spider, Robô">
+	<meta name="robots" content="index, follow">
+	<meta name="author" content="Marcos Farias RM81731, Rayk Rocha RM81723">
+	<link rel="stylesheet" href="css/estilo.css">
+	<link href="https://fonts.googleapis.com/css?family=Roboto+Slab" rel="stylesheet">
+	<link rel="icon" href="favicon.png">
+</head>
+<body>
+	<header class="cabecalho">
+		<a href="index.html"><div class="logo">Battlegrounds - FIAP</div></a>
+		<button class="btn-menu"><img src="image/menu.png" class="iconMenu"></button>
+		<nav class="menu">
+			<a class="btn-close">X<i class="fa fa-times"></i></a>
+			<ul>
+				<li><a href="index.html">HOME</a></li>
+				<li><a href="midia.html">MÍDIA</a></li>
+				<li><a href="noticia.php">NOTÍCIAS</a></li>
+				<li><a href="sobre.html">SOBRE</a></li>
+				<li><a href="game/game.html">JOGO</a></li>
+			</ul>
+		</nav>
+	</header>
+	<div class="banner">
+		<div class="title">
+			<h2>IRON SPIDER</h2>
+			<h3>Neste site você irá encontrar todas as informações sobre a criação do projeto e desenvolvimento do robô Iron Spider <br>Juntamente com o jogo desenvolvido pela equipe Battegrounds.</br></h3>
+			
+		</div>
+		<div class="buttons">
+			<a href="https://www.youtube.com/embed/VaZAKhNF4x4"><button class="btn btn-video">Vídeo<i class="fa fa-arrow-circle-right"></i></button></a>
+			<a href="game/game.html"><button class="btn btn-jogo">Jogo<i class="fa fa-arrow-circle-right"></i></button></a>
+		</div>
+	</div>
+	<main class="servicos">
+		<article class="servico" >
+			<a href="#"><img src="image/criação.jpg" alt="Criação do robo"></a>
+			<div class="inner">
+				<a href="#">Layout e Construção</a>
+				<h4>Fase inicial</h4>
+				<p>Esta foi a etapa de criação e construção do robô, desenvolvido com a ideia de se parecer com uma aranha, foi realizado modificações durante sua construção para poder manter o desing do araqnideo, e tambem acrescentar as armas e mobilidade, pois esse foi o o ponto chave para tornar a maquina campeã. </p>
+			</div>
+		</article>
+		<article class="servico" >
+			<a href="#"><img src="image/testes.jpg" alt="Conexões e Testes"></a>
+			<div class="inner">
+				<a href="#">Mobilidade Conectividade</a>
+				<h4>Montagem e ligação</h4>
+				<p>Esse foi o momento de testar se o robô iria funcionar ou não, uma fase critica que levou muito tempo pois se houvesse qualquer conexão mal realizada resultaria em não funcionar e até possivel perca do equipamento elétrico. Mas com o trabalho em equipe nenhum dano foi causado e a partir daí os testes nos motores de tração começaram, esses que eram o segundo maior foco já que nossa especialidade seria a rapidez e agilidade. </p>
+			</div>
+		</article>
+		<article class="servico" >
+			<a href="#"><img src="image/new2pic.jpg" alt="Desenho e Pintura"></a>
+			<div class="inner">
+				<a href="#">Desenho e Pintura</a>
+				<h4>Desenho Livre</h4>
+				<p>Hora da criatividade, concluido a primeira etapa de construir a base e fazer o Spider funcionar, passamos para o procedimento da pintura, hora de mostrar o simbolo que iria marcar esse evento, pensamos naquilo que ficaria mais marcante e deixar visivel a ideia de ser um robô aranha. </p>
+			</div>
+		</article>
+	</main>
+	<!-- RODAPÉ -->
+	<footer class="rodape">
+		<a href="login.php" class="login">LOGIN</a>
+		<p class="copyright">Battlegrounds - Iron Spider FIAP 2018. </p>
+	</footer>
+	<!-- JQUERY -->
+	<script src="js/jquery-3.3.1.min.js"></script>
+	<script>
+		$(".btn-menu").click(function(){
+			$(".menu").show();
+		});
+		$(".btn-close").click(function(){
+			$(".menu").hide();
+		});
+	</script>
+</body>
+</html>

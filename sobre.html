@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="widht=device-width, initial-scale=1">
+	<title>Battlegrounds - FIAP</title>
+	<meta name="description" content="Site desenvolido pela equipe Battlegrounds, para implementação de nota da atividade multidisciplinar - FIAP 2018">
+	<meta  name="keywords" content="FIAP, RoboCup, Iron Spider, Robô">
+	<meta name="robots" content="index, follow">
+	<meta name="author" content="Marcos Farias RM81731, Rayk Rocha RM81723">
+	<link rel="stylesheet" href="css/estilo.css">
+	<link href="https://fonts.googleapis.com/css?family=Roboto+Slab" rel="stylesheet">
+	<link rel="icon" href="favicon.png">
+</head>
+<body>
+	<header class="cabecalho">
+		<a href="index.html"><div class="logo">Battlegrounds - FIAP</div></a>
+		<button class="btn-menu"><img src="image/menu.png" class="iconMenu"></button>
+		<nav class="menu">
+			<a class="btn-close">X<i class="fa fa-times"></i></a>
+			<ul>
+				<li><a href="index.html">HOME</a></li>
+				<li><a href="midia.html">MÍDIA</a></li>
+				<li><a href="noticia.php">NOTÍCIAS</a></li>
+				<li><a href="sobre.html">SOBRE</a></li>
+				<li><a href="game/game.html">JOGO</a></li>
+			</ul>
+		</nav>
+	</header>
+	<div class="content">
+		<img src="image/sobre.png" alt="Criação do robo">
+			<div class="inner">
+				<a href="#">Layout e Construção</a>
+				<p>Esta foi a etapa de criação e construção do robô, desenvolvido com a ideia de se parecer com uma aranha, foi realizado modificações durante sua construção para poder manter o desing do araqnideo, e tambem acrescentar as armas e mobilidade, pois esse foi o o ponto chave para tornar a maquina campeã. </p>
+		</div>	
+	</div>
+	<!-- JQUERY -->
+	<script src="js/jquery-3.3.1.min.js"></script>
+	<script>
+		$(".btn-menu").click(function(){
+			$(".menu").show();
+		});
+		$(".btn-close").click(function(){
+			$(".menu").hide();
+		});
+	</script>
+</body>
+</html>

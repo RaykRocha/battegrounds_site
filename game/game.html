@@ -1,0 +1,591 @@
+<!doctype html>
+<html>
+
+<head>
+	<meta charset="UTF-8" />
+	<title>IRON SPIDER</title>
+	<link rel="icon" type="imagem/ico" href="favicon.ico">
+	<script src="js/phaser.js"></script>
+	<link rel="stylesheet" href="css/estilo.css">
+</head>
+
+<body>
+	<script>
+		var velocidadeJogador = 300;
+		var textoMoedas = 0;
+		var contadorMoedas = 0;
+
+		//MENU INICIAL
+		var mainState = {
+
+			//FUNÇÃO QUE CARREGA TODOS ARQUIVOS DE IMAGENS, SONS E ETC DO JOGO
+
+			preload: function() {
+				game.load.image('inimigo', 'assets/inimigo.png');
+				game.load.spritesheet('spider', 'assets/spider.png', 46, 58);
+				game.load.spritesheet('elixir', 'assets/elixir.png', 43, 80);
+				game.load.image('tilesCenario', 'assets/tileset.png');
+				game.load.image('tileset', 'assets/tilesetcenario.png');
+				game.load.tilemap('mapa', 'assets/mapacaverna.json', null, Phaser.Tilemap.TILED_JSON);
+				game.load.spritesheet('coin', 'assets/web.png', 32, 32);
+				game.load.audio('collect-web', ['assets/collect-web.ogg']);
+				game.load.audio('kick', ['assets/kick.ogg']);
+				game.load.audio('theme', ['assets/spider-theme.ogg']);
+				game.load.audio('menusong', ['assets/spider-menu.ogg']);
+				game.load.audio('lose', ['assets/lose.ogg']);
+				game.load.image('gameover', 'assets/gameover.jpg');
+				game.load.image('youwin', 'assets/win.jpg');
+				game.load.image('fundo', 'assets/fundo.png');
+				game.load.image('reiniciar', 'assets/main.jpg');
+				game.load.image('menu', 'assets/menu.jpg');
+				game.load.image('about', 'assets/about.jpg');
+				game.load.image('start', 'assets/start.jpg');
+				game.load.image('aboutImage', 'assets/moreabout.jpg');
+
+			},
+
+
+			create: function() {
+				//CARREGA IMAGEM DO MENU
+				var menu = game.add.image(0, 0, 'menu', {});
+				menu.fixedToCamera = true;
+				menu.cameraOffset.setTo(0, 0);
+				//BOTOES DO MENU(START E ABOUT)
+				var botaoStart = game.add.button(304, 400, 'start', this.start, this, 0, 0, 0);
+				botaoStart.fixedToCamera = true;
+				botaoStart.cameraOffset.setTo(304, 400);
+				var botaoAbout = game.add.button(304, 500, 'about', this.about, this, 0, 0, 0);
+				botaoAbout.fixedToCamera = true;
+				botaoAbout.cameraOffset.setTo(304, 500);
+				//MUSICA DO MENU
+				musicaMenu = game.add.audio('menusong', 1, true);
+				musicaMenu.volume = 0.5;
+				musicaMenu.play();
+			},
+			//FUNÇÃO QUE CHAMA O INICIO DO JOGO
+			start: function() {
+				game.state.start('jogo');
+				musicaMenu.mute = true;
+			},
+			//FUNÇÃO QUE CHAMA A PAGINA ABOUT
+			about: function() {
+				var menu = game.add.image(0, 0, 'aboutImage', {});
+				menu.fixedToCamera = true;
+				menu.cameraOffset.setTo(0, 0);
+				//BOTÃO QUE VOLTA PARA O MENU INICIAL
+				var botaoReiniciar = game.add.button(304, 520, 'reiniciar', this.reiniciar, this, 0, 0, 0);
+				botaoReiniciar.fixedToCamera = true;
+				botaoReiniciar.cameraOffset.setTo(304, 520);
+			},
+			//RELOAD
+			reiniciar: function() {
+				location.reload()
+			}
+		};
+		//JOGO
+		var jogoState = {
+			//FUNÇÃO QUE CRIA TODOS OS ELEMENTOS DO JOGO 
+			create: function() {
+				textobjects = game.add.group();
+				//CRIA FUNDO DO CENARIO
+				paralax = game.add.tileSprite(0, 0, 6600, 660, 'fundo');
+				this.criaFisica();
+				//ADD O MAPA
+				map = game.add.tilemap('mapa');
+				//INSERE O TILESET USADO NA CRIAÇÃO DO MAPA
+				map.addTilesetImage('tileset', 'tilesCenario');
+				map.addTilesetImage('tilesetcenario', 'tileset');
+				this.criaCamadasDoJogo();
+				//CRIA CAMADA DO CENARIO E DEFINE ELA DO TAMANHO DO MUNDO
+				layer = map.createLayer('cenario');
+				layer.resizeWorld();
+				//HABILITA OS CURSORES DO TECLADO PARA PODER CONTROLAR O JOGADOR
+				cursors = game.input.keyboard.createCursorKeys();
+				//CHAMANDO FUNÇÕES
+				this.criaJogador();
+				this.criaInimigos();
+				this.criaMoedas();
+				this.criaTextoPontuacao();
+				this.criaElixir();
+				//ADD OBJETO DE CONTROLE DE MUSICAS
+				musicaMoedas = game.add.audio('collect-web', 1, true);
+				musicaKick = game.add.audio('kick', 1, true);
+				musicaLose = game.add.audio('lose', 1, true);
+				musicaTheme = game.add.audio('theme', 1, true);
+				//TOCA MUSICA DO JOGO
+				musicaTheme.play();
+				musicaTheme.volume = 0.1;
+			},
+			//FUNÇÃO QUE ATUALIZA O JOGO EM TEMPO REAL
+			update: function() {
+				//MOVE O FUNDO DO CENARIO PARA EFEITO 3D
+				paralax.x = game.camera.x * 0.3;
+				//MOVIMENTA TODOS OS INIMIGOS
+				inimigos.forEach(this.movimentaInimigosVivos, this);
+				this.movimentaJogador();
+				this.verificaEscada();
+				//DETECTA COLISÃO DO JOGADOR COM TEIAS E ELIXIR(SEM CONTATO APENAS OVERLAP)
+				coins.forEach(function(moeda) {
+					if (this.checkOverlap(jogador, moeda)) {
+						this.encostouEmMoeda(jogador, moeda);
+					}
+				}, this)
+
+				elixir.forEach(function(elixir) {
+					if (this.checkOverlap(jogador, elixir)) {
+						this.encostouElixir(jogador, elixir);
+					}
+				}, this)
+			},
+			
+			
+			//CRIA TEXTO DE TEIAS OBTIDAS
+			criaTextoPontuacao: function() {
+				var myBitmap = game.add.bitmapData(100, 40);
+				myBitmap.context.fillStyle = "rgba(0, 0, 0, 0.8)";
+				myBitmap.context.fillRect(0, 0, 150, 40);
+				sprite = game.add.sprite(25, 20, myBitmap);
+				sprite.fixedToCamera = true;
+				textoMoedas = game.add.text(40, 30, contadorMoedas + " WEB", {
+					font: "22px Arial",
+					fill: "#FFFFFF",
+					align: "left"
+				});
+				textoMoedas.fixedToCamera = true;
+			},
+			//MOVIMENTA O JOGADOR
+			movimentaJogador: function() {
+				if (cursors.left.isDown) {
+					jogador.body.moveLeft(velocidadeJogador);
+					jogador.animations.play('left');
+				} else if (cursors.right.isDown) {
+					jogador.body.moveRight(velocidadeJogador);
+					jogador.animations.play('right');
+				} else {
+					//PARA ANIMAÇÃO
+					jogador.animations.stop();
+					//DEFINE FRAME FIXO PARA QUANDO O JOGADOR ESTIVE PARADO
+					jogador.frame = 6;
+				}
+				//PERMITE O JOGADOR PULAR SÓ SE ESTIVER TOCANDO EM ALGO
+				if (cursors.up.isDown) {
+					if (this.touchingDown(jogador.body)) {
+						jogador.body.moveUp(650);
+					}
+				}
+				//FAZ O JOGADOR VOAR PRESSIONANDO SHIFT
+				if (game.input.keyboard.isDown(Phaser.Keyboard.SHIFT) && cursors.up.isDown) {
+					jogador.body.velocity.y = -150;
+				}
+			},
+
+			touchingDown: function(someone) {
+				var yAxis = p2.vec2.fromValues(0, 1);
+				var result = false;
+				for (var i = 0; i < game.physics.p2.world.narrowphase.contactEquations.length; i++) {
+					var c = game.physics.p2.world.narrowphase.contactEquations[i];
+					if (c.bodyA === someone.data || c.bodyB === someone.data) {
+						var d = p2.vec2.dot(c.normalA, yAxis); // Normal dot Y-axis
+						if (c.bodyA === someone.data) d *= -1;
+						if (d > 0.5) result = true;
+					}
+				}
+				return result;
+			},
+			//CRIA O JOGADOR E ADD NO JOGO
+			criaJogador: function() {
+				jogador = game.add.sprite(50, game.world.height - 250, 'spider');
+				game.physics.p2.enable(jogador, false);
+				jogador.body.data.gravityScale = 1;
+				jogador.body.allowSleep = true;
+				//DEFINE DUAS ANIMAÇÕES, ESQUERDA E DIREITA
+				jogador.animations.add('left', [0, 1, 2, 3, 4, 5], 10, true);
+				jogador.animations.add('right', [7, 8, 9, 10, 11, 12, 13], 10, true);
+				//FAZ CAMER SEGUIR O JOGADOR
+				game.camera.follow(jogador);
+				jogador.body.fixedRotation = true;
+				//DEFINE QUAL GRUPO DE COLISÃO O JOGADOR PERTENCE
+				jogador.body.setCollisionGroup(playerCG);
+				jogador.body.setMaterial(materialJogador);
+				//DEFINE COM QUAIS GRUPOS O JOGADOR IRA COLIDIR
+				jogador.body.collides([groundCG, enemyGroundCG, enemyAirCG, platformCG, deathCG]);
+				//DEFINE FUNÇÃO QUE SERA CHAMADA QUANDO JOGADOR ENCOSTAR EM INIMIGO E COISAS MORTAIS(ACIDO,EPINHOS)
+				jogador.body.createGroupCallback(enemyGroundCG, this.encostouInimigo, this);
+				jogador.body.createGroupCallback(deathCG, this.encostouInimigo, this);
+				jogador.body.createGroupCallback(deathCG, this.fimDoJogo, this);
+			},
+
+			criaInimigos: function() {
+				// O grupo inimigos será usado para gerenciar todos os inimigos
+				inimigos = game.add.group();
+				// Definimos aqui que qualquer inimigo terá um corpo
+				inimigos.enableBody = true;
+				// Define a física que será usada pelos inimigos
+				inimigos.physicsBodyType = Phaser.Physics.P2JS;
+
+
+
+				/**
+				 * Carrega moedas do grupo camadaInimigos (criado no tiled map editor) que estejam usando 
+				 * o GID 28 (tileset número 28). 
+				 * Substitui todos os inimigos pela imagem 'inimigo' carregada em carregaAssets 
+				 * e insere todos eles no grupo inimigos recém criado
+				 */
+				map.createFromObjects('camadaInimigos', 28, 'inimigo', 0, true, false, inimigos);
+				inimigos.forEach(this.configuraInimigos, this);
+			},
+
+			configuraInimigos: function(inimigo) {
+				// Define qual grupo de colisão o inimigo pertence (enemyGroundCG)
+				inimigo.body.setCollisionGroup(enemyGroundCG);
+
+				// Define qual quais grupos de colisão o inimigo irá colidir
+				inimigo.body.collides([playerCG, groundCG, platformCG, enemyboundsCG]);
+
+				// Fixa rotação do inimio
+				inimigo.body.fixedRotation = true;
+
+				// Caso jogo esteja parado, não processa corpo do inimigo
+				inimigo.body.allowSleep = true;
+
+				// Faz inimigo andar em direção ao jogador
+				inimigo.body.velocity.x -= 100;
+
+				// Define vida do inimigo
+				inimigo.health = 10;
+			},
+
+			criaMoedas: function() {
+				// Adiciona música da moeda no jogo, com o nome do asset (collect-web)
+				musicaMoedas = game.add.audio('collect-web', 1, true);
+
+				// Cria grupo de moedas
+				coins = game.add.group();
+
+				/**
+				 * Carrega moedas do grupo camadaMoedas (criado no tiled map editor) que estejam usando 
+				 * o GID 22 (tileset número 22). 
+				 * Substitui todas as moedas pela imagem 'coin' carregada em carregaAssets 
+				 * e insere todoas elas no grupo coins recém criado
+				 */
+				map.createFromObjects('camadaMoedas', 22, 'coin', 0, true, false, coins);
+
+				// Adiciona a função add no objeto animations e cria animação giraMoeda em todos as moedas
+				coins.callAll('animations.add', 'animations', 'giraMoeda', [0, 1, 2, 3, 4, 5], 10, true);
+				// Chama animação recém criada (giraMoeda) em todas as moedas
+				coins.callAll('animations.play', 'animations', 'giraMoeda');
+
+				coins.forEach(function(moeda) {
+					// Habilita física p2 na moeda
+					game.physics.p2.enable(moeda);
+					// Com a física habilitada a moeda irá cair, com esta linha ela fica parada (estática)
+					moeda.body.static = true;
+					// Define que esta moeda está viva
+					moeda.estaViva = 1;
+
+					// Ajuste necessário por ativar a física (32 / 2)
+					moeda.body.y += 16;
+					moeda.body.x += 16;
+
+				}, this)
+			},
+
+			encostouInimigo: function(jogador, inimigo) {
+				this.mataInimigo(inimigo);
+
+				// Verifica se pulou em cima do inimigo
+				if (this.touchingUp(inimigo)) {
+					// Faz jogador pular
+					jogador.velocity.y = -650;
+					// Executa música de pulo em algo
+					musicaKick.play('', 0, 1, false);
+				} else {
+					// Em vez de terminar o jogo, chama função que gerencia "coisas mortíferas"
+					this.fimDoJogo();
+				}
+			},
+
+			fimDoJogo: function() {
+				//REMOVE JOGADOR DO JOGO
+				jogador.kill();
+				//MUTA A MUSICA DO JOGO
+				musicaTheme.mute = true;
+				//MOSTRA IMAGEM DE GAME OVER
+				var gameOver = game.add.image(0, 0, 'gameover', {});
+				gameOver.fixedToCamera = true;
+				gameOver.cameraOffset.setTo(0, 0);
+				//CHAMA BOTAO DE REINICIAR O JOGO
+				this.botaoReinicia();
+				//RODA A MUSICA DE FIM DE JOGO
+				musicaLose.play('', 0, 1, false);
+			},
+
+			encostouEmMoeda: function(player, moeda) {
+				if (moeda.estaViva == 1) {
+					var web = 0;
+					// Executa som da moeda por 1 segundo
+					musicaMoedas.play('', 0, 1, false);
+					musicaMoedas.volume = 0.5;
+					// Exclui a moeda do jogo
+					moeda.body.sprite.kill();
+					// Define que moeda já foi pega
+					moeda.estaViva = false;
+					// Contabiliza moedas
+					// Incrementa contador
+					web += 1;
+
+					// Atualiza texto
+					textoMoedas.setText(web + " WEB");
+				}
+			},
+
+			inimigoColidiuTile: function(inimigo, cenario) {
+				// Se o inimigo encostou em algo na esquerda, manda-o para direita
+				if (inimigo.body.blocked.left) {
+					inimigo.body.velocity.x += 100;
+				}
+
+				// Se o inimigo encostou em algo na direita, manda-o para esquerda
+				if (inimigo.body.blocked.right) {
+					inimigo.body.velocity.x -= 100;
+				}
+			},
+
+
+			verificaEscada: function() {
+				// Aqui revificamos se o jogador está em "cima" de um bloco de escada na camada layerEscada
+				var encostouEmEscada = map.getTileWorldXY(jogador.body.x, jogador.body.y, 32, 32, layerEscada);
+
+				// Verifica se encostou em um bloco de escada e se pressionou a tecla cima
+				if (encostouEmEscada && cursors.up.isDown) {
+					// Leva o jogador um pouco para cima
+					jogador.body.moveUp(150);
+					// Define que está na escada (usada para controlar movimentos do jogador)
+					jogadorNaEscada = true;
+				} else {
+					// Define que não está na escada
+					jogadorNaEscada = false;
+				}
+			},
+
+			mataInimigo: function(inimigo) {
+				inimigo.sprite.damage(5);
+				inimigo.moveUp(20);
+				inimigo.clearCollision(true, true);
+				inimigo.data.gravityScale = 1;
+				inimigo.angularVelocity = 10;
+			},
+
+			criaFisica: function() {
+				game.physics.startSystem(Phaser.Physics.P2JS);
+				game.physics.p2.setImpactEvents(true);
+				game.physics.defaultRestitution = 0;
+				game.physics.p2.gravity.y = 1900;
+				game.world.enableBodySleeping = true;
+				game.stage.smoothed = false;
+				//CRIA GRUPOS DE COLISÃO
+				playerCG = game.physics.p2.createCollisionGroup();
+				groundCG = game.physics.p2.createCollisionGroup();
+				enemyGroundCG = game.physics.p2.createCollisionGroup();
+				enemyAirCG = game.physics.p2.createCollisionGroup();
+				enemyboundsCG = game.physics.p2.createCollisionGroup();
+				platformCG = game.physics.p2.createCollisionGroup();
+				deathCG = game.physics.p2.createCollisionGroup();
+
+				//CRIA MATERIAIS
+				materialChao = game.physics.p2.createMaterial('ground');
+				materialJogador = game.physics.p2.createMaterial('player');
+				//DEFINE COMPORTAMENTO ENTRE MATERIAL JOGADOR E CHÃO
+				game.physics.p2.createContactMaterial(materialJogador, materialChao, {
+					friction: 1,
+					restitution: 0.1,
+					surfaceVelocity: 0
+				});
+			},
+
+			criaCamadasDoJogo: function() {
+				//CRIA CAMADAS DE LIMITE DO INIMIGO E OCULTA
+				limitesInimigo = map.createLayer('limitesInimigo');
+				limitesInimigo.visible = false;
+				//CRIA CAMADA DAS ESCADAS E OCULTA
+				layerEscada = map.createLayer('camadaEscada');
+				layerEscada.visible = false;
+				// Define quais tiles devem ser considerados de colisão
+				map.setCollisionByExclusion([0], true, limitesInimigo);
+
+				// Cria física para cada tile encontrado na camada limitesInimigo
+				camadaLimitesInimigo = game.physics.p2.convertTilemap(map, limitesInimigo);
+
+				camadaContato = game.physics.p2.convertCollisionObjects(map, "camadaContato");
+				camadaMorte = game.physics.p2.convertCollisionObjects(map, "camadaMorte");
+
+				//setup all tiles with collisiongroups or materials
+				for (i = 0; i < camadaContato.length; i++) {
+					// Define qual o grupo de colisão para a camadaContato
+					camadaContato[i].setCollisionGroup(groundCG);
+
+					// Define com quais grupos de colisão irá colidir (jogador, inimigos etc)
+					camadaContato[i].collides([playerCG, enemyGroundCG]);
+
+					// Define material da camada de contato
+					camadaContato[i].setMaterial(materialChao);
+				}
+
+				for (i = 0; i < camadaMorte.length; i++) {
+					// Define qual o grupo de colisão para a camadaContato
+					camadaMorte[i].setCollisionGroup(deathCG);
+
+					// Define com quais grupos de colisão irá colidir (jogador, inimigos etc)
+					camadaMorte[i].collides([playerCG]);
+
+					// Define material da camada de contato
+					camadaMorte[i].setMaterial(materialChao);
+				}
+
+				// Define que todos os limitadores de inimigos irão se chocar com os inimigos
+				for (i = 0; i < camadaLimitesInimigo.length; i++) {
+					// Define o grupo de colisão para os tiles
+					camadaLimitesInimigo[i].setCollisionGroup(enemyboundsCG);
+
+					// Define que irá colidir com o grupo de inimigos apenas
+					camadaLimitesInimigo[i].collides([enemyGroundCG]);
+				}
+
+
+			},
+
+			movimentaInimigosVivos: function(enemy) {
+				if (enemy.health == 10) {
+					if (enemy.name == "monstro" ||
+						enemy.name == "tartaruga") {
+
+						if (this.touchingLeft(enemy.body) || this.touchingRight(enemy.body)) {
+							enemy.body.x -= enemy.velo / 50;
+							enemy.velo *= -1;
+							enemy.scale.x *= -1;
+						}
+
+						enemy.body.velocity.x = enemy.velo;
+					} else if (enemy.name == "bala") {
+						enemy.body.moveLeft(250);
+					}
+				}
+			},
+
+			touchingUp: function(someone) {
+				var yAxis = p2.vec2.fromValues(0, 1);
+				var result = false;
+				for (var i = 0; i < game.physics.p2.world.narrowphase.contactEquations.length; i++) {
+					var c = game.physics.p2.world.narrowphase.contactEquations[i];
+					if (c.bodyA === someone.data || c.bodyB === someone.data) {
+						var d = p2.vec2.dot(c.normalA, yAxis); // Normal dot Y-axis
+						if (c.bodyA === someone.data) d *= -1;
+						if (d < -0.5) result = true;
+					}
+				}
+				return result;
+			},
+
+			touchingDown: function(someone) {
+				var yAxis = p2.vec2.fromValues(0, 1);
+				var result = false;
+				for (var i = 0; i < game.physics.p2.world.narrowphase.contactEquations.length; i++) {
+					var c = game.physics.p2.world.narrowphase.contactEquations[i];
+					if (c.bodyA === someone.data || c.bodyB === someone.data) {
+						var d = p2.vec2.dot(c.normalA, yAxis); // Normal dot Y-axis
+						if (c.bodyA === someone.data) d *= -1;
+						if (d > 0.5) result = true;
+					}
+				}
+				return result;
+			},
+
+			touchingLeft: function(someone) {
+				var xAxis = p2.vec2.fromValues(1, 0);
+				var result = false;
+				for (var i = 0; i < game.physics.p2.world.narrowphase.contactEquations.length; i++) {
+					var c = game.physics.p2.world.narrowphase.contactEquations[i];
+					if (c.bodyA === someone.data || c.bodyB === someone.data) {
+						var d = p2.vec2.dot(c.normalA, xAxis); // Normal dot Y-axis
+						if (c.bodyA === someone.data) d *= -1;
+						if (d < -0.5) result = true;
+					}
+				}
+				return result;
+			},
+
+			touchingRight: function(someone) {
+				var xAxis = p2.vec2.fromValues(1, 0);
+				var result = false;
+				for (var i = 0; i < game.physics.p2.world.narrowphase.contactEquations.length; i++) {
+					var c = game.physics.p2.world.narrowphase.contactEquations[i];
+					if (c.bodyA === someone.data || c.bodyB === someone.data) {
+						var d = p2.vec2.dot(c.normalA, xAxis); // Normal dot Y-axis
+						if (c.bodyA === someone.data) d *= -1;
+						if (d > 0.5) result = true;
+					}
+				}
+				return result;
+			},
+
+			checkOverlap: function(spriteA, spriteB) {
+				var boundsA = spriteA.getBounds();
+				var boundsB = spriteB.getBounds();
+
+				return Phaser.Rectangle.intersects(boundsA, boundsB);
+			},
+
+			botaoReinicia: function() {
+				var botaoReiniciar = game.add.button(304, 400, 'reiniciar', this.reiniciar, this, 0, 0, 0);
+				botaoReiniciar.fixedToCamera = true;
+				botaoReiniciar.cameraOffset.setTo(304, 400);
+			},
+
+			reiniciar: function() {
+				location.reload()
+			},
+
+			criaElixir: function() {
+				elixir = game.add.group();
+				map.createFromObjects('camadaElixir', 3829, 'elixir', 0, true, false, elixir);
+				elixir.callAll('animations.add', 'animations', 'giraElixir', [0, 1, 2, 3], 10, true);
+				elixir.callAll('animations.play', 'animations', 'giraElixir');
+				elixir.forEach(function(elixir) {
+					game.physics.p2.enable(elixir);
+					elixir.body.static = true;
+					elixir.estaViva = 1;
+
+					// Ajuste necessário por ativar a física (32 / 2)
+					elixir.body.y += 16;
+					elixir.body.x += 16;
+
+				}, this)
+			},
+
+			encostouElixir: function(player, elixir) {
+				if (elixir.estaViva == 1) {
+					// Exclui a moeda do jogo
+					elixir.body.sprite.kill();
+					// Define que moeda já foi pega
+					elixir.estaViva = false;
+					//musicaFim.play('', 0, 1, false);
+					// Contabiliza moedas
+					var youWin = game.add.image(0, 0, 'youwin', {});
+					youWin.fixedToCamera = true;
+					youWin.cameraOffset.setTo(0, 0);
+					musicaTheme.mute = true;
+					this.botaoReinicia();
+				}
+			}
+		};
+
+		var game = new Phaser.Game(1000, 608);
+		game.state.add('menu', mainState);
+		game.state.add('jogo', jogoState);
+		game.state.start('menu');
+
+	</script>
+	<a href="../index.html"><button class="voltar">VOLTAR</button></a>
+</body>
+
+</html>
